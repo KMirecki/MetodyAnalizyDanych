@@ -4,7 +4,9 @@ import pandas as pd
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.preprocessing import StandardScaler
 
 # DataFrame wczytany z csv
 df = pd.read_csv("medical_insurance.csv")
@@ -14,12 +16,16 @@ df = pd.read_csv("medical_insurance.csv")
 # print(df.info())
 
 # Wybranie kilku najważniejszych kolumn z pełnego DataFrame
-df1 = df[["age", "sex", "income", "education", "employment_status", "bmi", "smoker", "alcohol_freq", "risk_score",
-          "annual_medical_cost"]]
+df1 = df[["age", "sex", "income", "education", "employment_status", "bmi", "smoker", "alcohol_freq", "visits_last_year",
+          "medication_count", "systolic_bp", "diastolic_bp",
+          "risk_score",
+          "annual_medical_cost", "had_major_procedure"]]
 print(df1.info())
 
 # Podział danych na zmienne numeryczne i kategoryczne
-num_cols = ["age", "income", "bmi", "risk_score", "annual_medical_cost"]
+num_cols = ["age", "income", "bmi", "visits_last_year", "medication_count", "systolic_bp", "diastolic_bp", "risk_score",
+            "annual_medical_cost",
+            "had_major_procedure"]
 cat_cols = ["sex", "education", "employment_status", "smoker", "alcohol_freq"]
 
 # W komórkach alcohol_freq None było odczytywane przez pandas jako brak danych - zamiana None na Never
@@ -94,7 +100,7 @@ print(correlation_matrix)
 #     plt.xticks(rotation=45)
 #     plt.show()
 
-# Utworzenie prostego modelu regresji liniowej
+# Utworzenie modelu regresji liniowej
 df_model = df1.copy()
 # Przekształcenie danych kategorycznych do postaci numerycznej - One Hot Encoding
 df_model = pd.get_dummies(df_model, columns=cat_cols, drop_first=True)
@@ -104,6 +110,12 @@ y = df_model["annual_medical_cost"]
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 print(f"Rozmiar zbioru treningowego: {X_train.shape[0]}")
 print(f"Rozmiar zbioru testowego: {X_test.shape[0]}")
+
+scaler = StandardScaler()
+num_cols.remove("annual_medical_cost")
+X_train[num_cols] = scaler.fit_transform(X_train[num_cols])
+X_test[num_cols] = scaler.transform(X_test[num_cols])
+
 model = LinearRegression()
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
@@ -124,3 +136,17 @@ print(f"RSME: {rsme:.2f}")
 # plt.legend()
 # plt.grid(True)
 # plt.show()
+
+# Model 2 - Random Forest Regressor
+rf = RandomForestRegressor(n_estimators=300, random_state=42)
+rf.fit(X_train, y_train)
+rf_pred = rf.predict(X_test)
+print("RF R2:", r2_score(y_test, rf_pred))
+print("RF RMSE:", np.sqrt(mean_squared_error(y_test, rf_pred)))
+
+# Model 3 - Gradient Boosting Regressor
+gbr = GradientBoostingRegressor()
+gbr.fit(X_train, y_train)
+gbr_pred = gbr.predict(X_test)
+print("GBR R2:", r2_score(y_test, gbr_pred))
+print("GBR RMSE:", np.sqrt(mean_squared_error(y_test, gbr_pred)))
