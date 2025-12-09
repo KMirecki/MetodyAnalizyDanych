@@ -1,6 +1,10 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import r2_score, mean_squared_error
 
 # DataFrame wczytany z csv
 df = pd.read_csv("medical_insurance.csv")
@@ -14,7 +18,7 @@ df1 = df[["age", "sex", "income", "education", "employment_status", "bmi", "smok
           "annual_medical_cost"]]
 print(df1.info())
 
-# Podział danych na zmienne numeryczne i nienumeryczne
+# Podział danych na zmienne numeryczne i kategoryczne
 num_cols = ["age", "income", "bmi", "risk_score", "annual_medical_cost"]
 cat_cols = ["sex", "education", "employment_status", "smoker", "alcohol_freq"]
 
@@ -51,21 +55,21 @@ for col in num_cols:
 
 # Utworzenie histogramów dla zmiennych numerycznych
 # for col in num_cols:
-#     plt.figure(figsize=(10, 7))
+#     plt.figure(figsize=(10, 8))
 #     sns.histplot(df1[col], kde=True)
 #     plt.title(f"Histogram of {col}")
 #     plt.show()
 
 # Utworzenie boxplotów dla zmiennych numerycznych
 # for col in num_cols:
-#     plt.figure(figsize=(10, 7))
+#     plt.figure(figsize=(10, 8))
 #     sns.boxplot(x=df1[col])
 #     plt.title(f"Boxplot of {col}")
 #     plt.show()
 
-# Wykresy słupkowe dla zmiennych nienumerycznych
+# Wykresy słupkowe dla zmiennych kategorycznych
 # for col in cat_cols:
-#     plt.figure(figsize=(10, 7))
+#     plt.figure(figsize=(10, 8))
 #     sns.countplot(x=df1[col])
 #     plt.title(f"Countplot of {col}")
 #     plt.show()
@@ -73,8 +77,50 @@ for col in num_cols:
 # Macierz korelacji zmiennych numerycznych
 correlation_matrix = df1[num_cols].corr()
 print(correlation_matrix)
-# plt.figure(figsize=(10, 7))
+# plt.figure(figsize=(10, 8))
 # sns.heatmap(correlation_matrix, annot=True)
 # plt.yticks(rotation=45)
 # plt.title("Macierz korelacji zmiennych numerycznych")
+# plt.show()
+
+# Analiza wpływu zmiennych kategorycznych na koszt
+# for col in cat_cols:
+#     plt.figure(figsize=(10, 8))
+#     sns.boxplot(x=df1["annual_medical_cost"], y=df1[col])
+#     # Ograniczenie dla osi x dla poprawy widoczności boxplotów
+#     cost_limit = df1["annual_medical_cost"].quantile(0.95)
+#     plt.xlim(0, cost_limit)
+#     plt.title(f"Rozkład kosztów ubezpieczenia wg {col}")
+#     plt.xticks(rotation=45)
+#     plt.show()
+
+# Utworzenie prostego modelu regresji liniowej
+df_model = df1.copy()
+# Przekształcenie danych kategorycznych do postaci numerycznej - One Hot Encoding
+df_model = pd.get_dummies(df_model, columns=cat_cols, drop_first=True)
+# print(f"Liczba kolumn po One-Hot Encoding: {df_model.shape}")
+X = df_model.drop("annual_medical_cost", axis=1)
+y = df_model["annual_medical_cost"]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+print(f"Rozmiar zbioru treningowego: {X_train.shape[0]}")
+print(f"Rozmiar zbioru testowego: {X_test.shape[0]}")
+model = LinearRegression()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+# Metryki do oceny modelu
+r2 = r2_score(y_test, y_pred)
+rsme = np.sqrt(mean_squared_error(y_test, y_pred))
+print(f"Współczynnik R-kwadrat: {r2:.4f}")
+print(f"RSME: {rsme:.2f}")
+
+# plt.figure(figsize=[10, 8])
+# plt.scatter(y_test, y_pred, color="blue", alpha=0.5, label="Punkty Danych")
+# max_val = max(y_test.max(), y_pred.max())
+# min_val = min(y_test.min(), y_pred.min())
+# plt.plot([min_val, max_val], [min_val, max_val], 'r--', label="Linia Idealnej Predykcji (y=x)")
+# plt.title("Rzeczywiste vs. Przewidywane Koszty Ubezpieczenia")
+# plt.xlabel("Rzeczywiste Koszty Ubezpieczenia")
+# plt.ylabel("Przewidywane Koszty Ubezpieczenia")
+# plt.legend()
+# plt.grid(True)
 # plt.show()
