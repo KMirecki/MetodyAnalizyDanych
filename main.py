@@ -16,21 +16,15 @@ df = pd.read_csv("medical_insurance.csv")
 # print(df.info())
 
 # Wybranie kilku najważniejszych kolumn z pełnego DataFrame
-df1 = df[["age", "sex", "income", "education", "employment_status", "bmi", "smoker", "alcohol_freq", "visits_last_year",
-          "medication_count", "network_tier", "risk_score",
-          "annual_medical_cost", "claims_count", "total_claims_paid", "chronic_count", "hypertension", "diabetes",
-          "asthma", "copd", "cardiovascular_disease", "cancer_history", "kidney_disease", "liver_disease", "arthritis",
-          "mental_health",
-          "had_major_procedure"]]
+df1 = df[
+    ["age", "sex", "education", "employment_status", "smoker", "alcohol_freq", "visits_last_year", "medication_count",
+     "network_tier", "risk_score", "annual_medical_cost", "annual_premium", "claims_count", "total_claims_paid",
+     "chronic_count", "had_major_procedure"]]
 print(df1.info())
 
 # Podział danych na zmienne numeryczne i kategoryczne
-num_cols = ["age", "income", "bmi", "visits_last_year", "medication_count",
-            "risk_score",
-            "annual_medical_cost", "claims_count", "total_claims_paid", "chronic_count", "hypertension", "diabetes",
-            "asthma", "copd", "cardiovascular_disease", "cancer_history", "kidney_disease", "liver_disease",
-            "arthritis", "mental_health",
-            "had_major_procedure"]
+num_cols = ["age", "visits_last_year", "medication_count", "risk_score", "annual_medical_cost", "annual_premium",
+            "claims_count", "total_claims_paid", "chronic_count", "had_major_procedure"]
 cat_cols = ["sex", "education", "employment_status", "smoker", "alcohol_freq", "network_tier"]
 
 # W komórkach alcohol_freq None było odczytywane przez pandas jako brak danych - zamiana None na Never
@@ -88,11 +82,12 @@ for col in num_cols:
 # Macierz korelacji zmiennych numerycznych
 correlation_matrix = df1[num_cols].corr()
 print(correlation_matrix)
-# plt.figure(figsize=(10, 8))
-# sns.heatmap(correlation_matrix, annot=True)
-# plt.yticks(rotation=45)
-# plt.title("Macierz korelacji zmiennych numerycznych")
-# plt.show()
+plt.figure(figsize=(10, 8))
+sns.heatmap(correlation_matrix, annot=True)
+plt.yticks(rotation=25)
+plt.xticks(rotation=25)
+plt.title("Macierz korelacji zmiennych numerycznych")
+plt.show()
 
 # Analiza wpływu zmiennych kategorycznych na koszt
 # for col in cat_cols:
@@ -131,27 +126,27 @@ print(f"Współczynnik R-kwadrat: {r2:.4f}")
 print(f"RSME: {rsme:.2f}")
 
 # plt.figure(figsize=[10, 8])
-# plt.scatter(y_test, y_pred, color="blue", alpha=0.5, label="Punkty Danych")
-# max_val = max(y_test.max(), y_pred.max())
-# min_val = min(y_test.min(), y_pred.min())
-# plt.plot([min_val, max_val], [min_val, max_val], 'r--', label="Linia Idealnej Predykcji (y=x)")
-# plt.title("Rzeczywiste vs. Przewidywane Koszty Ubezpieczenia")
-# plt.xlabel("Rzeczywiste Koszty Ubezpieczenia")
-# plt.ylabel("Przewidywane Koszty Ubezpieczenia")
-# plt.legend()
-# plt.grid(True)
-# plt.show()
+plt.scatter(y_test, y_pred, color="blue", alpha=0.5, label="Punkty Danych")
+max_val = max(y_test.max(), y_pred.max())
+min_val = min(y_test.min(), y_pred.min())
+plt.plot([min_val, max_val], [min_val, max_val], 'r--', label="Linia Idealnej Predykcji (y_pred=y_test)")
+plt.title("Rzeczywisty vs. Przewidywany koszt ubezpieczenia")
+plt.xlabel("Rzeczywisty koszt ubezpieczenia")
+plt.ylabel("Przewidywany koszt ubezpieczenia")
+plt.legend()
+plt.grid(True)
+plt.show()
 
 # Model 2 - Random Forest Regressor
-rf = RandomForestRegressor(n_estimators=100, random_state=42)
-rf.fit(X_train, y_train)
-rf_pred = rf.predict(X_test)
-print("RF R2:", r2_score(y_test, rf_pred))
-print("RF RMSE:", np.sqrt(mean_squared_error(y_test, rf_pred)))
+# rf = RandomForestRegressor(n_estimators=100, random_state=42)
+# rf.fit(X_train, y_train)
+# rf_pred = rf.predict(X_test)
+# print("RF R2:", r2_score(y_test, rf_pred))
+# print("RF RMSE:", np.sqrt(mean_squared_error(y_test, rf_pred)))
 
 # Model 3 - Gradient Boosting Regressor
-gbr = GradientBoostingRegressor()
-gbr.fit(X_train, y_train)
-gbr_pred = gbr.predict(X_test)
-print("GBR R2:", r2_score(y_test, gbr_pred))
-print("GBR RMSE:", np.sqrt(mean_squared_error(y_test, gbr_pred)))
+# gbr = GradientBoostingRegressor()
+# gbr.fit(X_train, y_train)
+# gbr_pred = gbr.predict(X_test)
+# print("GBR R2:", r2_score(y_test, gbr_pred))
+# print("GBR RMSE:", np.sqrt(mean_squared_error(y_test, gbr_pred)))
