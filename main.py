@@ -17,16 +17,21 @@ df = pd.read_csv("medical_insurance.csv")
 
 # Wybranie kilku najważniejszych kolumn z pełnego DataFrame
 df1 = df[["age", "sex", "income", "education", "employment_status", "bmi", "smoker", "alcohol_freq", "visits_last_year",
-          "medication_count", "systolic_bp", "diastolic_bp",
-          "risk_score",
-          "annual_medical_cost", "had_major_procedure"]]
+          "medication_count", "network_tier", "risk_score",
+          "annual_medical_cost", "claims_count", "total_claims_paid", "chronic_count", "hypertension", "diabetes",
+          "asthma", "copd", "cardiovascular_disease", "cancer_history", "kidney_disease", "liver_disease", "arthritis",
+          "mental_health",
+          "had_major_procedure"]]
 print(df1.info())
 
 # Podział danych na zmienne numeryczne i kategoryczne
-num_cols = ["age", "income", "bmi", "visits_last_year", "medication_count", "systolic_bp", "diastolic_bp", "risk_score",
-            "annual_medical_cost",
+num_cols = ["age", "income", "bmi", "visits_last_year", "medication_count",
+            "risk_score",
+            "annual_medical_cost", "claims_count", "total_claims_paid", "chronic_count", "hypertension", "diabetes",
+            "asthma", "copd", "cardiovascular_disease", "cancer_history", "kidney_disease", "liver_disease",
+            "arthritis", "mental_health",
             "had_major_procedure"]
-cat_cols = ["sex", "education", "employment_status", "smoker", "alcohol_freq"]
+cat_cols = ["sex", "education", "employment_status", "smoker", "alcohol_freq", "network_tier"]
 
 # W komórkach alcohol_freq None było odczytywane przez pandas jako brak danych - zamiana None na Never
 df1["alcohol_freq"] = df1["alcohol_freq"].fillna("Never")
@@ -103,7 +108,7 @@ print(correlation_matrix)
 # Utworzenie modelu regresji liniowej
 df_model = df1.copy()
 # Przekształcenie danych kategorycznych do postaci numerycznej - One Hot Encoding
-df_model = pd.get_dummies(df_model, columns=cat_cols, drop_first=True)
+df_model = pd.get_dummies(df_model, columns=cat_cols)
 # print(f"Liczba kolumn po One-Hot Encoding: {df_model.shape}")
 X = df_model.drop("annual_medical_cost", axis=1)
 y = df_model["annual_medical_cost"]
@@ -138,7 +143,7 @@ print(f"RSME: {rsme:.2f}")
 # plt.show()
 
 # Model 2 - Random Forest Regressor
-rf = RandomForestRegressor(n_estimators=300, random_state=42)
+rf = RandomForestRegressor(n_estimators=100, random_state=42)
 rf.fit(X_train, y_train)
 rf_pred = rf.predict(X_test)
 print("RF R2:", r2_score(y_test, rf_pred))
