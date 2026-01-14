@@ -4,7 +4,6 @@ import pandas as pd
 import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.preprocessing import StandardScaler
 
@@ -13,19 +12,23 @@ df = pd.read_csv("medical_insurance.csv")
 # rows, columns = df.shape
 # print(df.head())
 # print(f"Number of rows: {rows}, Number of columns: {columns}")
-# print(df.info())
+print(df.info())
 
 # Wybranie kilku najważniejszych kolumn z pełnego DataFrame
 df1 = df[
-    ["age", "sex", "education", "employment_status", "smoker", "alcohol_freq", "visits_last_year", "medication_count",
-     "network_tier", "risk_score", "annual_medical_cost", "annual_premium", "claims_count", "total_claims_paid",
-     "chronic_count", "had_major_procedure"]]
+    ["sex", "education", "smoker", "alcohol_freq", "visits_last_year",
+     "hospitalizations_last_3yrs", "days_hospitalized_last_3yrs",
+     "network_tier", "risk_score", "annual_medical_cost", "annual_premium", "monthly_premium",
+     "claims_count", "avg_claim_amount", "total_claims_paid", "chronic_count", "hypertension", "is_high_risk",
+     "had_major_procedure"]]
 print(df1.info())
 
 # Podział danych na zmienne numeryczne i kategoryczne
-num_cols = ["age", "visits_last_year", "medication_count", "risk_score", "annual_medical_cost", "annual_premium",
-            "claims_count", "total_claims_paid", "chronic_count", "had_major_procedure"]
-cat_cols = ["sex", "education", "employment_status", "smoker", "alcohol_freq", "network_tier"]
+num_cols = ["visits_last_year", "hospitalizations_last_3yrs", "days_hospitalized_last_3yrs", "risk_score",
+            "annual_medical_cost", "annual_premium", "monthly_premium",
+            "claims_count", "avg_claim_amount", "total_claims_paid", "chronic_count", "hypertension", "is_high_risk",
+            "had_major_procedure"]
+cat_cols = ["sex", "education", "smoker", "alcohol_freq", "network_tier"]
 
 # W komórkach alcohol_freq None było odczytywane przez pandas jako brak danych - zamiana None na Never
 df1["alcohol_freq"] = df1["alcohol_freq"].fillna("Never")
@@ -36,10 +39,17 @@ print(f"Liczba pustych komórek w kolumnie:\n{df1.isnull().sum()}")
 
 # Walidacja danych numerycznych
 for col in num_cols:
-    print(f"Czy w kolumnie {col} są dane negatywne?: {(df1[col] < 0).any()}")
+    print(f"Czy w kolumnie {col} są dane ujemne?: {(df1[col] < 0).any()}")
 
 # Wykrywanie obserwacji odstających metodą 1.5 IQR
-for col in num_cols:
+# Kolumny, których outliery nie powinny być brane pod uwagę
+filter_cols = ["hypertension", "is_high_risk", "had_major_procedure", "days_hospitalized_last_3yrs",
+               "hospitalizations_last_3yrs", "visits_last_year", "risk_score", "chronic_count", "claims_count"]
+num_cols_filtered = [
+    col for col in num_cols if col not in filter_cols
+]
+
+for col in num_cols_filtered:
     # Obliczenie kwartyli, IQR i progów
     Q1 = df1[col].quantile(0.25)
     Q3 = df1[col].quantile(0.75)
@@ -47,7 +57,7 @@ for col in num_cols:
     lower_bound = Q1 - 1.5 * IQR
     upper_bound = Q3 + 1.5 * IQR
 
-    # Zliczenie obserwacji odstającyh
+    # Zliczenie obserwacji odstających
     outliers_low = df1[col][df1[col] < lower_bound].count()
     outliers_high = df1[col][df1[col] > upper_bound].count()
     total_outliers = outliers_low + outliers_high
@@ -58,6 +68,13 @@ for col in num_cols:
     print(f"Obserwacje odstające z góry: {outliers_high}")
     print(f"Łącznie: {total_outliers} ({total_outliers / len(df1) * 100:.2f}%)")
 
+# Winsoryzacja outlierów
+df_winsorized = df1.copy()
+
+for col in num_cols_filtered:
+    upper_limit = df_winsorized[col].quantile(0.97)
+    df_winsorized[col] = df_winsorized[col].clip(0, upper_limit)
+
 # Utworzenie histogramów dla zmiennych numerycznych
 # for col in num_cols:
 #     plt.figure(figsize=(10, 8))
@@ -66,11 +83,17 @@ for col in num_cols:
 #     plt.show()
 
 # Utworzenie boxplotów dla zmiennych numerycznych
-# for col in num_cols:
-#     plt.figure(figsize=(10, 8))
-#     sns.boxplot(x=df1[col])
-#     plt.title(f"Boxplot of {col}")
-#     plt.show()
+for col in num_cols_filtered:
+    plt.figure(figsize=(10, 8))
+    sns.boxplot(x=df1[col])
+    plt.title(f"Boxplot of {col}")
+    plt.show()
+
+for col in num_cols_filtered:
+    plt.figure(figsize=(10, 8))
+    sns.boxplot(x=df_winsorized[col])
+    plt.title(f"Boxplot of {col}")
+    plt.show()
 
 # Wykresy słupkowe dla zmiennych kategorycznych
 # for col in cat_cols:
@@ -80,14 +103,14 @@ for col in num_cols:
 #     plt.show()
 
 # Macierz korelacji zmiennych numerycznych
-correlation_matrix = df1[num_cols].corr()
-print(correlation_matrix)
-plt.figure(figsize=(10, 8))
-sns.heatmap(correlation_matrix, annot=True)
-plt.yticks(rotation=25)
-plt.xticks(rotation=25)
-plt.title("Macierz korelacji zmiennych numerycznych")
-plt.show()
+# correlation_matrix = df1[num_cols].corr()
+# print(correlation_matrix)
+# plt.figure(figsize=(10, 8))
+# sns.heatmap(correlation_matrix, annot=True)
+# plt.yticks(rotation=25)
+# plt.xticks(rotation=25)
+# plt.title("Macierz korelacji zmiennych numerycznych")
+# plt.show()
 
 # Analiza wpływu zmiennych kategorycznych na koszt
 # for col in cat_cols:
@@ -101,52 +124,42 @@ plt.show()
 #     plt.show()
 
 # Utworzenie modelu regresji liniowej
-df_model = df1.copy()
+df_model = df_winsorized.copy()
+# print(df_model.info())
 # Przekształcenie danych kategorycznych do postaci numerycznej - One Hot Encoding
 df_model = pd.get_dummies(df_model, columns=cat_cols)
 # print(f"Liczba kolumn po One-Hot Encoding: {df_model.shape}")
 X = df_model.drop("annual_medical_cost", axis=1)
 y = df_model["annual_medical_cost"]
+cols_to_drop = ["total_claims_paid", "avg_claim_amount"]
+X = X.drop(columns=[c for c in cols_to_drop if c in X.columns])
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 print(f"Rozmiar zbioru treningowego: {X_train.shape[0]}")
 print(f"Rozmiar zbioru testowego: {X_test.shape[0]}")
 
+current_num_cols = [col for col in num_cols_filtered if col in X_train.columns and col != "annual_medical_cost"]
+# print(current_num_cols)
 scaler = StandardScaler()
-num_cols.remove("annual_medical_cost")
-X_train[num_cols] = scaler.fit_transform(X_train[num_cols])
-X_test[num_cols] = scaler.transform(X_test[num_cols])
+X_train[current_num_cols] = scaler.fit_transform(X_train[current_num_cols])
+X_test[current_num_cols] = scaler.transform(X_test[current_num_cols])
 
 model = LinearRegression()
 model.fit(X_train, y_train)
 y_pred = model.predict(X_test)
 # Metryki do oceny modelu
 r2 = r2_score(y_test, y_pred)
-rsme = np.sqrt(mean_squared_error(y_test, y_pred))
+rmse = np.sqrt(mean_squared_error(y_test, y_pred))
 print(f"Współczynnik R-kwadrat: {r2:.4f}")
-print(f"RSME: {rsme:.2f}")
+print(f"RMSE: {rmse:.2f}")
 
 # plt.figure(figsize=[10, 8])
-plt.scatter(y_test, y_pred, color="blue", alpha=0.5, label="Punkty Danych")
-max_val = max(y_test.max(), y_pred.max())
-min_val = min(y_test.min(), y_pred.min())
-plt.plot([min_val, max_val], [min_val, max_val], 'r--', label="Linia Idealnej Predykcji (y_pred=y_test)")
-plt.title("Rzeczywisty vs. Przewidywany koszt ubezpieczenia")
-plt.xlabel("Rzeczywisty koszt ubezpieczenia")
-plt.ylabel("Przewidywany koszt ubezpieczenia")
-plt.legend()
-plt.grid(True)
-plt.show()
-
-# Model 2 - Random Forest Regressor
-# rf = RandomForestRegressor(n_estimators=100, random_state=42)
-# rf.fit(X_train, y_train)
-# rf_pred = rf.predict(X_test)
-# print("RF R2:", r2_score(y_test, rf_pred))
-# print("RF RMSE:", np.sqrt(mean_squared_error(y_test, rf_pred)))
-
-# Model 3 - Gradient Boosting Regressor
-# gbr = GradientBoostingRegressor()
-# gbr.fit(X_train, y_train)
-# gbr_pred = gbr.predict(X_test)
-# print("GBR R2:", r2_score(y_test, gbr_pred))
-# print("GBR RMSE:", np.sqrt(mean_squared_error(y_test, gbr_pred)))
+# plt.scatter(y_test, y_pred, color="blue", alpha=0.5, label="Punkty Danych")
+# max_val = max(y_test.max(), y_pred.max())
+# min_val = min(y_test.min(), y_pred.min())
+# plt.plot([min_val, max_val], [min_val, max_val], 'r--', label="Linia Idealnej Predykcji (y_pred=y_test)")
+# plt.title("Rzeczywiste vs. Przewidywane koszty medyczne")
+# plt.xlabel("Rzeczywiste koszty medyczne")
+# plt.ylabel("Przewidywane koszty medyczne")
+# plt.legend()
+# plt.grid(True)
+# plt.show()
