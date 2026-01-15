@@ -68,32 +68,45 @@ for col in num_cols_filtered:
     print(f"Obserwacje odstające z góry: {outliers_high}")
     print(f"Łącznie: {total_outliers} ({total_outliers / len(df1) * 100:.2f}%)")
 
+# Wyświetlenie informacji o danych przed modyfikacją outlierów
+# for col in num_cols_filtered:
+#     print(df1[col].describe())
+
 # Winsoryzacja outlierów
+print(df1['annual_medical_cost'].describe())
 df_winsorized = df1.copy()
 
 for col in num_cols_filtered:
-    upper_limit = df_winsorized[col].quantile(0.97)
+    upper_limit = df_winsorized[col].quantile(0.99)
     df_winsorized[col] = df_winsorized[col].clip(0, upper_limit)
 
+print(df_winsorized['annual_medical_cost'].describe())
+
+# Wyświetlenie informacji o danych po winsoryzacji
+# for col in num_cols_filtered:
+#     print(df_winsorized[col].describe())
+
 # Utworzenie histogramów dla zmiennych numerycznych
-# for col in num_cols:
-#     plt.figure(figsize=(10, 8))
-#     sns.histplot(df1[col], kde=True)
-#     plt.title(f"Histogram of {col}")
-#     plt.show()
+for col in num_cols_filtered:
+    plt.figure(figsize=(10, 8))
+    sns.histplot(df1[col], kde=True)
+    plt.title(f"Histogram of {col}")
+    plt.show()
 
 # Utworzenie boxplotów dla zmiennych numerycznych
-for col in num_cols_filtered:
-    plt.figure(figsize=(10, 8))
-    sns.boxplot(x=df1[col])
-    plt.title(f"Boxplot of {col}")
-    plt.show()
+# Przed winsoryzacją outlierów
+# for col in num_cols_filtered:
+#     plt.figure(figsize=(10, 8))
+#     sns.boxplot(x=df1[col])
+#     plt.title(f"Boxplot of {col}")
+#     plt.show()
 
-for col in num_cols_filtered:
-    plt.figure(figsize=(10, 8))
-    sns.boxplot(x=df_winsorized[col])
-    plt.title(f"Boxplot of {col}")
-    plt.show()
+# Po winsoryzacji
+# for col in num_cols_filtered:
+#     plt.figure(figsize=(10, 8))
+#     sns.boxplot(x=df_winsorized[col])
+#     plt.title(f"Boxplot of {col}")
+#     plt.show()
 
 # Wykresy słupkowe dla zmiennych kategorycznych
 # for col in cat_cols:
@@ -131,8 +144,8 @@ df_model = pd.get_dummies(df_model, columns=cat_cols)
 # print(f"Liczba kolumn po One-Hot Encoding: {df_model.shape}")
 X = df_model.drop("annual_medical_cost", axis=1)
 y = df_model["annual_medical_cost"]
-cols_to_drop = ["total_claims_paid", "avg_claim_amount"]
-X = X.drop(columns=[c for c in cols_to_drop if c in X.columns])
+# cols_to_drop = ["total_claims_paid", "avg_claim_amount"]
+# X = X.drop(columns=[c for c in cols_to_drop if c in X.columns])
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 print(f"Rozmiar zbioru treningowego: {X_train.shape[0]}")
 print(f"Rozmiar zbioru testowego: {X_test.shape[0]}")
