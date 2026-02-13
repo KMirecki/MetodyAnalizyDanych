@@ -92,32 +92,32 @@ print(df_winsorized['annual_medical_cost'].describe())
 
 # Utworzenie histogramów dla zmiennych numerycznych
 # Przed winsoryzacją
-# for col in num_cols_filtered:
-#     plt.figure(figsize=(10, 8))
-#     sns.histplot(df1[col], kde=True)
-#     plt.title(f"Histogram of {col}")
-#     plt.show()
+for col in num_cols_filtered:
+    plt.figure(figsize=(10, 8))
+    sns.histplot(df1[col], kde=True)
+    plt.title(f"Histogram of {col}", fontsize=22, pad=20)
+    plt.show()
 
 # Po winsoryzacji
-# for col in num_cols_filtered:
-#     plt.figure(figsize=(10, 8))
-#     sns.histplot(df_winsorized[col], kde=True)
-#     plt.title(f"Histogram of {col}")
-#     plt.show()
+for col in num_cols_filtered:
+    plt.figure(figsize=(10, 8))
+    sns.histplot(df_winsorized[col], kde=True)
+    plt.title(f"Histogram of {col}", fontsize=22, pad=20)
+    plt.show()
 
 # Utworzenie boxplotów dla zmiennych numerycznych
 # Przed winsoryzacją outlierów
 # for col in num_cols_filtered:
 #     plt.figure(figsize=(10, 8))
 #     sns.boxplot(x=df1[col])
-#     plt.title(f"Boxplot of {col}")
+#     plt.title(f"Boxplot of {col}", fontsize=22, pad=20)
 #     plt.show()
 
 # Po winsoryzacji
 # for col in num_cols_filtered:
 #     plt.figure(figsize=(10, 8))
 #     sns.boxplot(x=df_winsorized[col])
-#     plt.title(f"Boxplot of {col}")
+#     plt.title(f"Boxplot of {col}", fontsize=22, pad=20)
 #     plt.show()
 
 # Wykresy słupkowe dla zmiennych kategorycznych
@@ -128,25 +128,32 @@ print(df_winsorized['annual_medical_cost'].describe())
 #     plt.show()
 
 # Macierz korelacji zmiennych numerycznych
-# correlation_matrix = df1[num_cols].corr()
+correlation_matrix = df1[num_cols].corr()
 # print(correlation_matrix)
-# plt.figure(figsize=(10, 8))
-# sns.heatmap(correlation_matrix, annot=True)
-# plt.yticks(rotation=25)
-# plt.xticks(rotation=25)
-# plt.title("Macierz korelacji zmiennych numerycznych")
-# plt.show()
+plt.figure(figsize=(14, 10))
+sns.heatmap(
+    correlation_matrix,
+    annot=True,
+    fmt='.2f',
+    annot_kws={"size": 11},
+    linewidths=0.5
+)
+plt.xticks(rotation=45, ha='right', fontsize=12)
+plt.yticks(rotation=0, fontsize=12)
+plt.title("Macierz korelacji zmiennych numerycznych", fontsize=22, pad=20)
+plt.tight_layout()
+plt.show()
 
 # Analiza wpływu zmiennych kategorycznych na koszt
-# for col in cat_cols:
-#     plt.figure(figsize=(10, 8))
-#     sns.boxplot(x=df1["annual_medical_cost"], y=df1[col])
-#     # Ograniczenie dla osi x dla poprawy widoczności boxplotów
-#     cost_limit = df1["annual_medical_cost"].quantile(0.95)
-#     plt.xlim(0, cost_limit)
-#     plt.title(f"Rozkład kosztów ubezpieczenia wg {col}")
-#     plt.xticks(rotation=45)
-#     plt.show()
+for col in cat_cols:
+    plt.figure(figsize=(10, 8))
+    sns.boxplot(x=df1["annual_medical_cost"], y=df1[col])
+    # Ograniczenie dla osi x dla poprawy widoczności boxplotów
+    cost_limit = df1["annual_medical_cost"].quantile(0.95)
+    plt.xlim(0, cost_limit)
+    plt.title(f"Rozkład kosztów medycznych wg {col}", fontsize=22, pad=20)
+    plt.xticks(rotation=45)
+    plt.show()
 
 # Utworzenie modelu regresji liniowej
 df_model = df_winsorized.copy()
@@ -176,17 +183,17 @@ print(f"--- Linear Regression  ---")
 print(f"Współczynnik R-kwadrat: {r2:.4f}")
 print(f"RMSE: {rmse:.2f}")
 
-# plt.figure(figsize=[10, 8])
-# plt.scatter(y_test, y_pred, color="blue", alpha=0.5, label="Punkty Danych")
-# max_val = max(y_test.max(), y_pred.max())
-# min_val = min(y_test.min(), y_pred.min())
-# plt.plot([min_val, max_val], [min_val, max_val], 'r--', label="Linia Idealnej Predykcji (y_pred=y_test)")
-# plt.title("Rzeczywiste vs. Przewidywane koszty medyczne")
-# plt.xlabel("Rzeczywiste koszty medyczne")
-# plt.ylabel("Przewidywane koszty medyczne")
-# plt.legend()
-# plt.grid(True)
-# plt.show()
+plt.figure(figsize=[14, 10])
+plt.scatter(y_test, y_pred, color="blue", alpha=0.5, label="Punkty Danych")
+max_val = max(y_test.max(), y_pred.max())
+min_val = min(y_test.min(), y_pred.min())
+plt.plot([min_val, max_val], [min_val, max_val], 'r--', label="Linia Idealnej Predykcji (y_pred=y_test)")
+plt.title("Rzeczywiste vs. Przewidywane koszty medyczne", fontsize=22, pad=20)
+plt.xlabel("Rzeczywiste koszty medyczne")
+plt.ylabel("Przewidywane koszty medyczne")
+plt.legend()
+plt.grid(True)
+plt.show()
 
 # Dobór hiperparametrów do modelu Random Forest
 # param_grid = {
@@ -254,22 +261,22 @@ print(f"RMSE: {rmse:.2f}")
 # print(f"Współczynnik R-kwadrat: {r2_xgb:.4f}")
 # print(f"RMSE: {rmse_xgb:.2f}")
 
-xgb_model = xgb.XGBRegressor(
-    n_estimators=200,
-    learning_rate=0.05,
-    max_depth=5,
-    subsample=0.9,
-    colsample_bytree=0.7,
-    random_state=42
-)
-
-xgb_model.fit(X_train, y_train)
-y_pred_xgb = xgb_model.predict(X_test)
-r2_xgb = r2_score(y_test, y_pred_xgb)
-rmse_xgb = np.sqrt(mean_squared_error(y_test, y_pred_xgb))
-print(f"--- XGBoost ---")
-print(f"Współczynnik R-kwadrat: {r2_xgb:.4f}")
-print(f"RMSE: {rmse_xgb:.2f}")
+# xgb_model = xgb.XGBRegressor(
+#     n_estimators=200,
+#     learning_rate=0.05,
+#     max_depth=5,
+#     subsample=0.9,
+#     colsample_bytree=0.7,
+#     random_state=42
+# )
+# 
+# xgb_model.fit(X_train, y_train)
+# y_pred_xgb = xgb_model.predict(X_test)
+# r2_xgb = r2_score(y_test, y_pred_xgb)
+# rmse_xgb = np.sqrt(mean_squared_error(y_test, y_pred_xgb))
+# print(f"--- XGBoost ---")
+# print(f"Współczynnik R-kwadrat: {r2_xgb:.4f}")
+# print(f"RMSE: {rmse_xgb:.2f}")
 
 # importances = xgb_model.feature_importances_
 # feature_names = X_train.columns
